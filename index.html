@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>A-Frame AR.js</title>
+    <meta charset="utf-8" />
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/fontawesome.min.css"
+      integrity="sha512-KVdV5HNnN1f6YOANbRuNxyCnqyPICKUmQusEkyeRg4X0p8K1xCdbHs32aA7pWo6WqMZk0wAzl29cItZh8oBPYQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script>
+      // this is an object, not an array
+      let marker_visible = { m0: false, m1: false };
+
+      // a component to handle marker events: found and lost
+      AFRAME.registerComponent("marker-events", {
+        init: function () {
+          let el = this.el;
+
+          el.addEventListener("markerFound", function () {
+            marker_visible[el.id] = true;
+            console.log(el.id + " found");
+          });
+
+          el.addEventListener("markerLost", function () {
+            marker_visible[el.id] = false;
+            console.log(el.id + " lost");
+          });
+        },
+      });
+
+      AFRAME.registerComponent("draw-line", {
+        init: function () {
+          // getting the DOM elements "#m0" and "#m1"
+          this.el0 = document.querySelector("#m0");
+          this.el1 = document.querySelector("#m1");
+
+          // to store the position of the the markers
+          this.p0 = new THREE.Vector3();
+          this.p1 = new THREE.Vector3();
+
+          // a buffer (data) representing a line (a long and thin cylinder)
+          let geometry = new THREE.CylinderGeometry(0.01, 0.01, 1, 3);
+          geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0.5, 0));
+          geometry.applyMatrix(
+            new THREE.Matrix4().makeRotationX(THREE.Math.degToRad(90))
+          );
+
+          // set up the material of the line
+          let material = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+          material.opacity = 0.5;
+
+          // assemble a line by combining the buffer and material
+          this.line = new THREE.Mesh(geometry, material);
+
+          // get the current object3D from the #drawHere inside #m0
+          this.origin = document.querySelector("#drawHere").object3D;
+
+          // add the line to the origin object3D (located at #drawHere which is #m0)
+          this.origin.add(this.line);
+        },
+
+        // loop to check if the two markers are visible
+        tick: function (time, deltaTime) {
+          // if both markers are visible, get their world positions and store in p0 and p1
+          if (marker_visible["m0"] && marker_visible["m1"]) {
+            this.el0.object3D.getWorldPosition(this.p0);
+            this.el1.object3D.getWorldPosition(this.p1);
+
+            // compute the distance from p0 to p1
+            let distance = this.p0.distanceTo(this.p1);
+
+            // orient the frame of reference to look at p1 (+z direction point at p1)
+            this.origin.lookAt(this.p1);
+
+            // set the scale of the line
+            this.line.scale.set(1, 1, distance);
+
+            // make the line visible
+            this.line.visible = true;
+          } else {
+            // if any marker is not visible, hide the line
+            this.line.visible = false;
+          }
+        },
+      });
+    </script>
+  </head>
+  <body style="margin: 0px; overflow: hidden">
+    <!-- A-Frame is built on top of Three.js. All a-frame elements are Three's object3D,
+         but A-Frame does not include AR.js components by default. 
+         We also want to hide the VR UI. -->
+    <div
+      class="absolute top-0 left-0 z-50 w-[100vw] space-y-6 py-7 px-2 inset-y-0"
+    >
+      <div class="grid sm:grid-cols-2 h-full">
+        <div class="h-full w-full"></div>
+        <div
+          class="w-full h-full flex justify-center items-end sm:items-center sm:justify-end"
+        >
+          <div
+            class="bg-white/60 w-2/3 h-auto flex flex-col items-center justify-items-center gap-y-2 px-2 pb-4"
+          >
+            <div
+              class="flex flex-row items-end justify-between w-full px-2 py-3"
+            >
+              <div>
+                <button
+                  class="bg-black hover:bg-black/50 active:bg-green-500 h-7 w-7 rounded-full text-white"
+                >
+                  <i class="fa-solid fa-volume"></i>
+                </button>
+              </div>
+              <div class="flex flex-row gap-x-0.5">
+                <img class="h-7 w-7 bg-red-600 rounded-full" alt="" />
+                <img class="h-7 w-7 bg-red-600 rounded-full" alt="" />
+                <img class="h-7 w-7 bg-red-600 rounded-full" alt="" />
+              </div>
+            </div>
+            <button
+              class="bg-black hover:bg-black/50 active:bg-green-500 text-white w-2/3 h-auto"
+            >
+              PRODUCT DETAIL
+            </button>
+            <button
+              class="bg-black hover:bg-black/50 active:bg-green-500 text-white w-2/3 h-auto"
+            >
+              VIRTUAL TOUR 360
+            </button>
+            <button
+              class="bg-black hover:bg-black/50 active:bg-green-500 text-white w-2/3 h-auto"
+            >
+              VR MODE
+            </button>
+            <button
+              class="bg-black hover:bg-black/50 active:bg-green-500 text-white w-2/3 h-auto"
+            >
+              RESEARCH WORK
+            </button>
+            <button
+              class="bg-black hover:bg-black/50 active:bg-green-500 text-white w-2/3 h-auto"
+            >
+              PRODUCT REVIEW
+            </button>
+            <button
+              class="bg-black hover:bg-black/50 active:bg-green-500 h-10 w-10 rounded-full text-white mt-2"
+            >
+              <i class="fa-solid fa-cart-arrow-down"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a-scene
+      class="h-[100vh] w-[100vw]"
+      embedded
+      arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_9_3;"
+      vr-mode-ui="enabled: false;"
+    >
+      <!-- marker #m0 or p0 -->
+      <a-marker type="barcode" value="100" id="m0" marker-events>
+        <!-- draw a red box -->
+        <a-box
+          position="0 0.1 0"
+          color="red"
+          opacity="0.5"
+          scale="0.2 0.2 0.2"
+        ></a-box>
+        <!-- draw area originated at #m0/p0 -->
+        <a-entity id="drawHere"></a-entity>
+      </a-marker>
+
+      <!-- marker #m1 or p1 -->
+      <a-marker type="barcode" value="101" id="m1" marker-events>
+        <!-- draw a red box -->
+        <a-box
+          position="0 0.1 0"
+          color="green"
+          opacity="0.5"
+          scale="0.2 0.2 0.2"
+        ></a-box>
+      </a-marker>
+
+      <!-- we need the camera entity to use the webcam to detect the markers -->
+      <a-entity camera class="h-[100vh] w-[100vw]"></a-entity>
+
+      <!-- This entity will check if the two markers are visible.
+           If the two markers are visible, the draw-line component will draw a blue line between the two markers -->
+      <a-entity draw-line></a-entity>
+    </a-scene>
+  </body>
+</html>

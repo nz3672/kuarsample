@@ -23,13 +23,23 @@
           let el = this.el;
 
           el.addEventListener("markerFound", function () {
+            console.log(
+              "tt" +
+                document
+                  .getElementById("scan-interface")
+                  .classList.contains("hidden")
+            );
             marker_visible[el.id] = true;
             console.log(el.id + " found");
+            document
+              .getElementById("scan-interface")
+              .classList.remove("hidden");
           });
 
           el.addEventListener("markerLost", function () {
             marker_visible[el.id] = false;
             console.log(el.id + " lost");
+            document.getElementById("scan-interface").classList.add("hidden");
           });
         },
       });
@@ -96,7 +106,8 @@
          but A-Frame does not include AR.js components by default. 
          We also want to hide the VR UI. -->
     <div
-      class="absolute top-0 left-0 z-50 w-[100vw] space-y-6 py-7 px-2 inset-y-0"
+      class="absolute top-0 left-0 z-50 w-[100vw] space-y-6 py-7 px-2 inset-y-0 hidden"
+      id="scan-interface"
     >
       <div class="grid sm:grid-cols-2 h-full">
         <div class="h-full w-full"></div>
